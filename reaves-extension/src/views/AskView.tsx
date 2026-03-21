@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { callAPI, sendHighlights, clearHighlights } from '../api';
+import { callAPI } from '../api';
 import { readNotebooks, writeNotebooks } from '../notebook-bridge';
-import type { ClarifierResponse, EvidenceResponse, SearchResult, Source, Notebook } from '../types';
+import type { ClarifierResponse, SearchResult, Source, Notebook } from '../types';
 
 interface Props {
   initialText: string | null;
@@ -157,7 +157,6 @@ export default function AskView({ initialText, onTextConsumed }: Props) {
   }
 
   function reset() {
-    clearHighlights();
     setStep('input');
     setQuery('');
     setClarifier(null);
@@ -166,76 +165,7 @@ export default function AskView({ initialText, onTextConsumed }: Props) {
     setPickerOpenFor(null);
   }
 
-  async function handlePageAnalysis() {
-    if (!query.trim()) return;
-    setStep('searching');
-    setError(null);
-    clearHighlights();
 
-    try {
-      // Get the active tab
-      const [tab] = await new Promise<chrome.tabs.Tab[]>((res) =>
-        chrome.tabs.query({ active: true, currentWindow: true }, res)
-      );
-      if (!tab?.id) throw new Error('No active tab found.');
-
-      // Extract readable text from the page (same strategy as PageSearchView)
-      const [{ result: pageText }] = await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: () => {
-          const selectors = [
-            'article', 'main', '[role="main"]', '.content',
-            '.article-body', '#content', 'body',
-          ];
-          for (const s of selectors) {
-            const el = document.querySelector(s);
-            if (el) {
-              const t = (el as HTMLElement).innerText;
-              if (t.length > 200) return t.slice(0, 30000);
-            }
-          }
-          return document.body.innerText.slice(0, 30000);
-        },
-      });
-
-      if (!pageText || pageText.length < 100) {
-        setError('Could not extract readable text from this page.');
-        setStep('input');
-        return;
-      }
-
-      const res = await callAPI<EvidenceResponse>('/api/page-search', {
-        question: query.trim(),
-        context: pageText,
-      });
-
-      if (!res.ok || !res.data) {
-        setError('Page analysis failed. Make sure REAVES app is running at localhost:3000.');
-        setStep('input');
-        return;
-      }
-
-      const evidence = res.data;
-
-      // Highlight the evidence snippet on the page
-      if (evidence.evidence_snippet && evidence.status === 'success') {
-        sendHighlights([{ text: evidence.evidence_snippet }]);
-      }
-
-      // Surface the answer in the results panel via the synthesis field
-      setResults({
-        sources: [],
-        synthesis: evidence.answer,
-        agreements: [],
-        conflicts: [],
-        research_gaps: [],
-      });
-      setStep('results');
-    } catch (err) {
-      setError(String(err));
-      setStep('input');
-    }
-  }
 
   function scoreClass(score: number) {
     if (score >= 70) return 'score-high';
@@ -251,7 +181,7 @@ export default function AskView({ initialText, onTextConsumed }: Props) {
           <p className="section-label">Highlight or type a query</p>
           <textarea
             className="input"
-            rows={3}
+            rows={5}
             placeholder="Paste highlighted text or type a research question…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -275,26 +205,6 @@ export default function AskView({ initialText, onTextConsumed }: Props) {
             </button>
           </div>
 
-          {/* Row 2: Evidence Engine — analyze the current page */}
-          <button
-            style={{
-              width: '100%',
-              marginTop: 6,
-              background: 'rgba(124,58,237,0.12)',
-              border: '1px solid rgba(124,58,237,0.3)',
-              color: 'var(--violet)',
-              fontWeight: 600,
-              fontSize: 11,
-              padding: '7px 12px',
-              borderRadius: 8,
-              cursor: 'pointer',
-              opacity: (!query.trim() || step === 'clarifying') ? 0.4 : 1,
-            }}
-            onClick={handlePageAnalysis}
-            disabled={!query.trim() || step === 'clarifying'}
-          >
-            🔍 Analyze This Page
-          </button>
         </>
       )}
 

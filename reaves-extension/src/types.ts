@@ -73,4 +73,4 @@ export interface EvidenceResponse {
   status: 'success' | 'no_evidence_found';
 }
 
-export type View = 'ask' | 'pagesearch' | 'notebook';
+export type View = 'ask' | 'pagesearch' | 'notebook' | 'analyze';

@@ -2,6 +2,7 @@ import { useState, useEffect, type JSX } from 'react';
 import { getPendingSelection } from './api';
 import AskView from './views/AskView';
 import NotebookView from './views/NotebookView';
+import AnalyzePage from './views/AnalyzePage';
 import { GlossaryCard, useGlossaryToggle } from './views/GlossaryCard';
 import type { View } from './types';
 
@@ -19,6 +20,11 @@ const SearchIcon = () => (
 const BookIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+  </svg>
+);
+const ScanIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/>
   </svg>
 );
 
@@ -74,6 +80,7 @@ export default function App() {
 
   const navItems: Array<{ id: View; label: string; Icon: () => JSX.Element }> = [
     { id: 'ask',      label: 'Ask',      Icon: SparkleIcon },
+    { id: 'analyze',  label: 'Analyze',  Icon: ScanIcon   },
     { id: 'notebook', label: 'Notebook', Icon: BookIcon   },
   ];
 
@@ -133,6 +140,7 @@ export default function App() {
             onTextConsumed={() => setPendingText(null)}
           />
         )}
+        {view === 'analyze' && <AnalyzePage />}
         {view === 'notebook' && <NotebookView />}
       </main>
 

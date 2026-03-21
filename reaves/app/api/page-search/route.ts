@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { callClaude } from '@/lib/anthropic';
-import { RAG_SYSTEM_PROMPT } from '@/prompts/rag';
+import { RAG_SYSTEM_PROMPT, GLOBAL_SYSTEM_PROMPT } from '@/prompts/rag';
 import { EvidenceResponse } from '@/types';
 
 export async function POST(req: NextRequest) {
@@ -10,11 +10,13 @@ export async function POST(req: NextRequest) {
     // Accept both the spec shape { question, context }
     // and the legacy extension shape { query, chunks }
     const question: string = body.question ?? body.query ?? '';
+    const mode: string = body.mode ?? 'local';
+    const isGlobal = mode === 'global';
     const rawContext: string =
       body.context ??
       (Array.isArray(body.chunks) ? (body.chunks as string[]).join(' ') : '');
 
-    if (!question || !rawContext) {
+    if (!question || (!isGlobal && !rawContext)) {
       return NextResponse.json(
         { error: 'Missing question/query or context/chunks' },
         { status: 400 },
@@ -37,18 +39,22 @@ export async function POST(req: NextRequest) {
       } as EvidenceResponse);
     }
 
-    // Inject question and context via user message (keeps the system prompt clean and reusable)
-    const userMessage = `USER_QUESTION: ${question}
+    // Branch prompt and message based on mode
+    let systemPrompt: string;
+    let userMessage: string;
 
-PAGE_CONTENT:
-${cleanContext}
-Analyze the page content... 
-STRICT RULE: Your evidence_snippet MUST be a direct "Copy-Paste" from the PAGE_CONTENT. 
-If you change a single comma, the user will not see the highlight. 
-DO NOT REPHRASE THE SNIPPET
-Analyze the page content and answer the question, ensuring you extract an exact character-for-character excerpt as the evidence_snippet.`;
+    if (isGlobal) {
+      systemPrompt = GLOBAL_SYSTEM_PROMPT;
+      const refBlock = cleanContext
+        ? `\n\nOPTIONAL_REFERENCE_CONTEXT (use ONLY if relevant, otherwise ignore):\n${cleanContext}`
+        : '';
+      userMessage = `USER_QUESTION: ${question}${refBlock}`;
+    } else {
+      systemPrompt = RAG_SYSTEM_PROMPT;
+      userMessage = `USER_QUESTION: ${question}\n\nPAGE_CONTENT:\n${cleanContext}\nAnalyze the page content... \nSTRICT RULE: Your evidence_snippet MUST be a direct "Copy-Paste" from the PAGE_CONTENT. \nIf you change a single comma, the user will not see the highlight. \nDO NOT REPHRASE THE SNIPPET\nAnalyze the page content and answer the question, ensuring you extract an exact character-for-character excerpt as the evidence_snippet.`;
+    }
 
-    const rawResult = (await callClaude(RAG_SYSTEM_PROMPT, userMessage)) as Record<
+    const rawResult = (await callClaude(systemPrompt, userMessage)) as Record<
       string,
       unknown
     >;
@@ -74,7 +80,8 @@ Analyze the page content and answer the question, ensuring you extract an exact 
 
     // Server-side Literal-Match guard: nullify any hallucinated snippet so the
     // frontend highlighter never crashes on a non-existent substring.
-    if (result.evidence_snippet && !cleanContext.includes(result.evidence_snippet)) {
+    // Skip this guard in global mode — there is no document to highlight.
+    if (!isGlobal && result.evidence_snippet && !cleanContext.includes(result.evidence_snippet)) {
       console.warn(
         '[/api/page-search] AI returned a snippet that is not a literal match — nullifying to protect the frontend highlighter.',
       );
