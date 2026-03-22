@@ -13,10 +13,11 @@
   ],
   "host_permissions": [
     "<all_urls>",
-    "https://reaves-f-mol1-3isvuqyw6-galarjs-projects.vercel.app/*"
+    "https://reaves-f-mol1.vercel.app/*",
+    "https://fxmudyjgfheriatuqphw.supabase.co/*"
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://reaves-f-mol1-3isvuqyw6-galarjs-projects.vercel.app;"
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://reaves-f-mol1.vercel.app https://fxmudyjgfheriatuqphw.supabase.co;"
   },
   "background": {
     "service_worker": "background.js",

@@ -63,7 +63,11 @@ export default function AskView({ initialText, onTextConsumed }: Props) {
     setError(null);
     const res = await callAPI<ClarifierResponse>('/api/clarify', { raw_query: query.trim() });
     if (!res.ok || !res.data) {
-      setError('REAVES Cloud Syncing... Please verify your connection.');
+      if (res.status === 400 || res.status === 401 || (res.error && (res.error.includes('400') || res.error.includes('401') || res.error.includes('auth')))) {
+        setError('Log in to the REAVES Web Dashboard');
+      } else {
+        setError(res.error || 'REAVES Cloud Syncing... Please verify your connection.');
+      }
       setStep('input');
       return;
     }
@@ -89,7 +93,11 @@ export default function AskView({ initialText, onTextConsumed }: Props) {
     setError(null);
     const res = await callAPI<SearchResult>('/api/search', { refined_query: q });
     if (!res.ok || !res.data) {
-      setError('Search failed. Please try again.');
+      if (res.status === 400 || res.status === 401 || (res.error && (res.error.includes('400') || res.error.includes('401') || res.error.includes('auth')))) {
+        setError('Log in to the REAVES Web Dashboard');
+      } else {
+        setError(res.error || 'Search failed. Please try again.');
+      }
       setStep('input');
       return;
     }

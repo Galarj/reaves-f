@@ -9,8 +9,9 @@
  */
 
 // Production API base — hardcoded because background.js is NOT processed by Vite.
-const WEB_APP_BASE = 'https://reaves-f-mol1.vercel.app';
-console.log('[REAVES] Service Worker loaded. API target:', WEB_APP_BASE);
+const API_BASE = 'https://reaves-f-mol1.vercel.app';
+const SUPABASE_URL = 'https://fxmudyjgfheriatuqphw.supabase.co';
+console.log('[REAVES] Service Worker loaded. API target:', API_BASE);
 
 // ─── Smart Glossary: instant lookup table ─────────────────────────────────────
 // Matched by lowercase key. Returns the same shape as /api/define.
@@ -83,10 +84,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const { endpoint, method = 'POST', body } = message;
     chrome.storage.session.get('authToken').then(async (result) => {
       try {
-        const fullUrl = `${WEB_APP_BASE}${endpoint}`;
+        const fullUrl = `${API_BASE}${endpoint}`;
         console.log(`[REAVES] Fetching: ${fullUrl}`);
         const res = await fetch(fullUrl, {
           method,
+          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
             ...(result.authToken ? { Authorization: `Bearer ${result.authToken}` } : {}),
@@ -94,9 +96,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           body: body ? JSON.stringify(body) : undefined,
         });
         const data = await res.json();
-        sendResponse({ ok: res.ok, data });
+        sendResponse({ ok: res.ok, status: res.status, data });
       } catch (err) {
-        sendResponse({ ok: false, error: String(err) });
+        sendResponse({ ok: false, error: "REAVES Cloud Syncing... Please verify your session at reaves-f-mol1.vercel.app" });
       }
     });
     return true; // async
@@ -154,8 +156,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     // 2. Slow path — call the Next.js backend
-    fetch(`${WEB_APP_BASE}/api/define`, {
+    fetch(`${API_BASE}/api/define`, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ word: rawWord }),
     })
@@ -166,7 +169,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       })
       .catch((err) => {
         console.error('[REAVES background] GET_DEFINITION fetch error:', err);
-        sendResponse({ ok: false, definition: null, error: String(err) });
+        sendResponse({ ok: false, definition: null, error: "REAVES Cloud Syncing... Please verify your session at reaves-f-mol1.vercel.app" });
       });
 
     return true; // async
@@ -177,10 +180,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // This handler proxies the request through the background service worker.
   if (type === 'GRADE_SEARCH_RESULT') {
     const { title = '', url = '', snippet = '' } = message.payload || {};
-    const fullUrl = `${WEB_APP_BASE}/api/grade`;
+    const fullUrl = `${API_BASE}/api/grade`;
     console.log(`[REAVES] Fetching: ${fullUrl}`);
     fetch(fullUrl, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title, url, snippet }),
     })
@@ -188,7 +192,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       .then((data) => sendResponse({ ok: true, ...data }))
       .catch((err) => {
         console.error('[REAVES background] GRADE_SEARCH_RESULT error:', err);
-        sendResponse({ ok: false, grade: 'C', score: 50, reason: 'Backend unavailable.' });
+        sendResponse({ ok: false, grade: 'C', score: 50, reason: "REAVES Cloud Syncing... Please verify your session at reaves-f-mol1.vercel.app" });
       });
     return true; // async
   }
@@ -217,4 +221,5 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === 'reaves-search-page') {
     chrome.sidePanel.open({ tabId: tab.id }).catch(console.error);
   }
+
 });

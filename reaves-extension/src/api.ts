@@ -4,7 +4,7 @@
 export function callAPI<T>(
   endpoint: string,
   body: Record<string, unknown>
-): Promise<{ ok: boolean; data?: T; error?: string }> {
+): Promise<{ ok: boolean; data?: T; error?: string; status?: number }> {
   return new Promise((resolve) => {
     chrome.runtime.sendMessage(
       { type: 'CALL_API', endpoint, method: 'POST', body },
