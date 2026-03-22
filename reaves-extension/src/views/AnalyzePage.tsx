@@ -150,7 +150,7 @@ export default function AnalyzePage() {
 
       const answer = res.ok && res.data?.answer
         ? res.data.answer
-        : 'Sorry, I couldn\'t get a response. Make sure the REAVES app is running at localhost:3000.';
+        : 'Connecting to REAVES Cloud... Please check your internet connection.';
 
       const aiMsg: Message = { id: uid(), role: 'assistant', text: answer, mode };
       setMessages((prev) => [...prev, aiMsg]);

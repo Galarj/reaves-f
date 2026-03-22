@@ -63,7 +63,7 @@ export default function AskView({ initialText, onTextConsumed }: Props) {
     setError(null);
     const res = await callAPI<ClarifierResponse>('/api/clarify', { raw_query: query.trim() });
     if (!res.ok || !res.data) {
-      setError('Could not clarify query. Is the REAVES app running at localhost:3000?');
+      setError('Connecting to REAVES Cloud... Please check your internet connection.');
       setStep('input');
       return;
     }

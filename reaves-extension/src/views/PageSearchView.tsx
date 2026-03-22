@@ -98,7 +98,7 @@ export default function PageSearchView() {
       });
 
       if (!res.ok || !res.data) {
-        setError('Page search failed. Make sure REAVES app is running at localhost:3000.');
+        setError('Connecting to REAVES Cloud... Please check your internet connection.');
         setStep('idle');
         return;
       }

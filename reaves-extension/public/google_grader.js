@@ -393,7 +393,7 @@
               "\u26A0\uFE0F",
               "ERROR",
               null,
-              "Backend unavailable. Check localhost:3000.",
+              "Connecting to REAVES Cloud... Please check your internet connection.",
             );
           } else if (fallbackEl) {
             fallbackEl.style.background = "rgba(82, 82, 91, 0.7)";

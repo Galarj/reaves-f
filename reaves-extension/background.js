@@ -8,7 +8,8 @@
  * - Manage session token in chrome.storage.session
  */
 
-const WEB_APP_BASE = 'http://localhost:3000';
+import { BASE_URL } from './src/config.js';
+const WEB_APP_BASE = BASE_URL;
 
 // ─── Smart Glossary: instant lookup table ─────────────────────────────────────
 // Matched by lowercase key. Returns the same shape as /api/define.

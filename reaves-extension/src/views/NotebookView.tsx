@@ -177,7 +177,7 @@ export default function NotebookView() {
       })}
 
       <p style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 8, textAlign: 'center' }}>
-        Manage notebooks in the <a href="http://localhost:3000/notebook" target="_blank" rel="noopener noreferrer" style={{ color: '#a78bfa' }}>REAVES web app ↗</a>
+        Manage notebooks in the <a href="https://reaves-f-mol1-3isvuqyw6-galarjs-projects.vercel.app/notebook" target="_blank" rel="noopener noreferrer" style={{ color: '#a78bfa' }}>REAVES Cloud ↗</a>
       </p>
 
       {toast && <div className="toast">{toast}</div>}
